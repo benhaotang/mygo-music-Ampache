@@ -1,0 +1,21 @@
+{
+  "Ampache": "",
+  "Ampache URL": "",
+  "Full API URL, ending in /server/xml.server.php or /server/json.server.php. Use HTTPS.": "",
+  "Username": "",
+  "API password": "",
+  "Nextcloud: generate an API password in Music settings. Stored locally as plain text.": "",
+  "Songs": "",
+  "Albums": "",
+  "Artists": "",
+  "Set the Ampache URL, username and API password first": "",
+  "Invalid Ampache URL": "",
+  "Use an HTTP or HTTPS URL without embedded credentials": "",
+  "Enter the full Ampache API URL, ending in /server/xml.server.php": "",
+  "Ampache returned invalid JSON. Check the API URL.": "",
+  "Ampache did not return a session": "",
+  "Settings changed during sign-in": "",
+  "Ampache list exceeded 100000 entries": "",
+  "Ampache returned no audio URL": "",
+  "Unsupported audio URL": ""
+}

@@ -1,0 +1,15 @@
+{
+  "id": "ampache",
+  "name": "Ampache",
+  "version": "0.1.0",
+  "minAppVersion": "0.1.8",
+  "main": "index.js",
+  "playback": "stream",
+  "permissions": { "network": ["*"] },
+  "settings": [
+    { "key": "server", "label": "Ampache URL", "help": "Full API URL, ending in /server/xml.server.php or /server/json.server.php. Use HTTPS." },
+    { "key": "username", "label": "Username" },
+    { "key": "password", "label": "API password", "help": "Nextcloud: generate an API password in Music settings. Stored locally as plain text." }
+  ],
+  "navigation": [{ "builtin": "home" }]
+}
