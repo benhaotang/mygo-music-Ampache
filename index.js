@@ -150,6 +150,73 @@ export async function playlist({ id }) {
   const tracks = (await all("playlist_songs","song",{filter:id})).map(trackOf);
   return { ...playlistOf(item), tracks, trackCount:tracks.length };
 }
+// Better Lyrics lookup and TTML mapping follow egoist/mygo-music-youtube-music.
+export async function lyrics({ id }) {
+  const data = await call("song", { filter: id });
+  const track = trackOf(list(data, "song")[0] || data);
+  if (!track.name || !track.artists.some(a => a.name)) return { lines: [] };
+  const query = new URLSearchParams({ s: track.name, a: track.artists.map(a => a.name).join(", ") });
+  if (track.album.name) query.set("al", track.album.name);
+  if (track.duration) query.set("d", String(Math.round(track.duration / 1000)));
+  try {
+    const res = await fetch(`https://api.betterlyrics.org/getLyrics?${query}`, {
+      headers: { "user-agent": "MyGo Music (https://github.com/egoist/mygo-music)" },
+    });
+    if (!res.ok) return { lines: [] };
+    const answer = await res.json();
+    return { lines: typeof answer?.ttml === "string" ? linesOfTTML(answer.ttml) : [] };
+  } catch {
+    return { lines: [] };
+  }
+}
+
+const entities = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+const unescapeXML = s => s.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (all, entity) => {
+  if (entity[0] !== "#") return entities[entity] ?? all;
+  const code = /^#x/i.test(entity) ? parseInt(entity.slice(2), 16) : Number(entity.slice(1));
+  return code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : all;
+});
+function clockOf(value) {
+  if (!value) return null;
+  const parts = value.trim().replace(/s$/, "").split(":");
+  if (parts.length > 3 || parts.some(p => p === "" || !Number.isFinite(Number(p)) || Number(p) < 0)) return null;
+  return Math.round(parts.reduce((sum, p) => sum * 60 + Number(p), 0) * 1000);
+}
+const attrOf = (attrs, name) => attrs.match(new RegExp(`\\s${name}=["']([^"']*)["']`))?.[1];
+function linesOfTTML(ttml) {
+  const lines = [];
+  for (const [, pAttrs, body] of ttml.matchAll(/<p\b([^>]*)>([\s\S]*?)<\/p>/g)) {
+    const words = [];
+    let text = "", lead = "", word = null, depth = 0;
+    for (const [, close, name, attrs, chars] of body.matchAll(/<(\/?)([\w:.-]+)([^>]*?)\/?>|([^<]+)/g)) {
+      if (chars !== undefined) {
+        const s = unescapeXML(chars);
+        text += s;
+        if (word) word.text += s;
+        else if (words.length) words[words.length - 1].text += s;
+        else lead += s;
+        continue;
+      }
+      if (name !== "span") continue;
+      if (close) {
+        if (word && --depth === 0) { words.push(word); word = null; }
+      } else if (word) {
+        depth++;
+      } else {
+        const start = clockOf(attrOf(attrs, "begin"));
+        if (start === null) continue;
+        word = { start, end: clockOf(attrOf(attrs, "end")) ?? start, text: lead.trimStart() };
+        lead = "";
+        depth = 1;
+      }
+    }
+    const start = clockOf(attrOf(pAttrs, "begin")) ?? words[0]?.start;
+    const end = clockOf(attrOf(pAttrs, "end")) ?? words[words.length - 1]?.end ?? start;
+    text = text.replace(/\s+/g, " ").trim();
+    if (text && start != null) lines.push({ start, end, text, words: words.length ? words : undefined });
+  }
+  return lines;
+}
 export async function stream({ id }) {
   const data = await call("song", { filter:id });
   const item = list(data,"song")[0] || data;
