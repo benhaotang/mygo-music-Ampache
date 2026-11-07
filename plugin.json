@@ -7,9 +7,9 @@
   "playback": "stream",
   "permissions": { "network": ["*"] },
   "settings": [
-    { "key": "server", "label": "Ampache URL", "help": "Full API URL, ending in /server/xml.server.php or /server/json.server.php. Use HTTPS." },
+    { "key": "server", "label": "Server URL" },
     { "key": "username", "label": "Username" },
-    { "key": "password", "label": "API password", "help": "Nextcloud: generate an API password in Music settings. Stored locally as plain text." }
+   { "key": "password", "label": "Password" }
   ],
   "navigation": [{ "builtin": "home" }]
 }
