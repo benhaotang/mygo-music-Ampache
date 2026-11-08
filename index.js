@@ -246,8 +246,6 @@ function linesOfTTML(ttml) {
   return lines;
 }
 export async function stream({ id }) {
-  const data = await call("song", { filter:id });
-  const item = list(data,"song")[0] || data;
   const match = /^(podcast-episode|live-stream):(.+)$/.exec(id);
   const action = match ? (match[1] === "podcast-episode" ? "podcast_episode" : "live_stream") : "song";
   const data = await call(action, { filter: match ? match[2] : id });
