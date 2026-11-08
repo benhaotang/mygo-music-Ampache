@@ -110,7 +110,15 @@ const artistOf = x => ({ ...ref(x), imageUrl: x.art || undefined });
 const albumOf = x => ({ ...ref(x), imageUrl: x.art || undefined, artists: x.artist ? [ref(x.artist)] : [], released: x.year ? String(x.year) : undefined });
 const trackOf = x => ({ id: String(x.id), name: x.title || x.name || "", artists: x.artists?.map(ref) || (x.artist ? [ref(x.artist)] : []), album: { ...ref(x.album), imageUrl: x.art || undefined }, duration: Number(x.time || 0)*1000 });
 const playlistOf = x => ({ ...ref(x), owner: x.owner || "", trackCount: Number(x.items ?? x.songs ?? 0) });
-const kinds = { tracks: ["songs","song",trackOf], albums: ["albums","album",albumOf], artists: ["artists","artist",artistOf], playlists: ["playlists","playlist",playlistOf] };
+const showOf = x => ({ ...ref(x), imageUrl: x.art || undefined, description: x.description || "", publisher: x.author || "", episodeCount: Number(x.episodes || x.episode_count || 0) });
+const stationOf = x => ({ ...ref(x), imageUrl: x.art || undefined, description: x.description || "" });
+const episodeOf = (x, show) => ({
+  id: `podcast-episode:${x.id}`, name: x.title || x.name || "", duration: Number(x.time || 0) * 1000,
+  artists: x.author ? [{ id: "", name: x.author }] : [],
+  album: { id: show.id, name: show.name, imageUrl: x.art || show.imageUrl },
+  showId: show.id, description: x.description || "", published: x.pubdate || undefined,
+});
+const kinds = { tracks: ["songs","song",trackOf], albums: ["albums","album",albumOf], artists: ["artists","artist",artistOf], playlists: ["playlists","playlist",playlistOf], shows: ["podcasts","podcast",showOf] };
 export async function search({ query = "", kind = "tracks", offset = 0 }) {
   if (!kinds[kind]) return { [kind]: [], more: false };
   const [action,key,map] = kinds[kind];
@@ -150,8 +158,28 @@ export async function playlist({ id }) {
   const tracks = (await all("playlist_songs","song",{filter:id})).map(trackOf);
   return { ...playlistOf(item), tracks, trackCount:tracks.length };
 }
+export async function shows() {
+  return (await all("podcasts", "podcast")).map(showOf);
+}
+export async function show({ id, offset = 0 }) {
+  const data = await call("podcast", { filter: id });
+  const podcast = showOf(list(data, "podcast")[0] || data);
+  const rows = list(await call("podcast_episodes", { filter: id, offset, limit: pageSize }), "podcast_episode");
+  return { show: podcast, episodes: rows.map(x => episodeOf(x, podcast)), more: rows.length === pageSize };
+}
+export async function stations() {
+  return (await all("live_streams", "live_stream")).map(stationOf);
+}
+export async function stationNext({ id }) {
+  const data = await call("live_stream", { filter: id });
+  const item = list(data, "live_stream")[0] || data;
+  return [{ id: `live-stream:${item.id}`, name: item.name || "", artists: [],
+    album: { id: "", name: "", imageUrl: item.art || undefined }, duration: 0 }];
+}
+
 // Better Lyrics lookup and TTML mapping follow egoist/mygo-music-youtube-music.
 export async function lyrics({ id }) {
+  if (/^(podcast-episode|live-stream):/.test(id)) return { lines: [] };
   const data = await call("song", { filter: id });
   const track = trackOf(list(data, "song")[0] || data);
   if (!track.name || !track.artists.some(a => a.name)) return { lines: [] };
@@ -220,9 +248,15 @@ function linesOfTTML(ttml) {
 export async function stream({ id }) {
   const data = await call("song", { filter:id });
   const item = list(data,"song")[0] || data;
+  const match = /^(podcast-episode|live-stream):(.+)$/.exec(id);
+  const action = match ? (match[1] === "podcast-episode" ? "podcast_episode" : "live_stream") : "song";
+  const data = await call(action, { filter: match ? match[2] : id });
+  const item = list(data, action)[0] || data;
   if (!item.url) throw fail("unavailable", "Ampache returned no audio URL");
   const url = new URL(item.url, config().url);
   if (!/^https?:$/.test(url.protocol)) throw fail("unavailable", "Unsupported audio URL");
-  const type = String(item.stream_format || item.format || "").toLowerCase();
+  const mime = String(item.stream_mime || item.mime || "").split(";")[0].toLowerCase();
+  const mimeTypes = { "audio/mpeg": "mp3", "audio/flac": "flac", "audio/ogg": "ogg", "application/ogg": "ogg", "audio/wav": "wav", "audio/mp4": "m4a", "audio/aac": "aac" };
+  const type = String(item.stream_format || item.format || mimeTypes[mime] || "").toLowerCase();
   return { url:url.href, ...(type ? {type} : {}), bitRate:Number(item.stream_bitrate || item.bitrate || 0) };
 }

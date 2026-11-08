@@ -9,7 +9,7 @@
   "settings": [
     { "key": "server", "label": "Server URL" },
     { "key": "username", "label": "Username" },
-   { "key": "password", "label": "Password" }
+    { "key": "password", "label": "Password" }
   ],
-  "navigation": [{ "builtin": "home" }]
+  "navigation": [{ "builtin": "home" }, { "builtin": "shows" }, { "builtin": "stations" }]
 }
