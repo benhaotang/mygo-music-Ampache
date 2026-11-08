@@ -108,12 +108,12 @@ const list = (data, key) => Array.isArray(data) ? data : Array.isArray(data[key]
 const ref = x => ({ id: String(x?.id ?? ""), name: x?.name ?? x?.text ?? "" });
 const artistOf = x => ({ ...ref(x), imageUrl: x.art || undefined });
 const albumOf = x => ({ ...ref(x), imageUrl: x.art || undefined, artists: x.artist ? [ref(x.artist)] : [], released: x.year ? String(x.year) : undefined });
-const trackOf = x => ({ id: String(x.id), name: x.title || x.name || "", artists: x.artists?.map(ref) || (x.artist ? [ref(x.artist)] : []), album: { ...ref(x.album), imageUrl: x.art || undefined }, duration: Number(x.time || 0)*1000 });
+const trackOf = x => ({ id: String(x.id), name: x.title || x.name || "", artists: x.artists?.map(ref) || (x.artist ? [ref(x.artist)] : []), album: { ...ref(x.album), imageUrl: x.art || undefined }, duration: Math.round(Number(x.time || 0)*1000) });
 const playlistOf = x => ({ ...ref(x), owner: x.owner || "", trackCount: Number(x.items ?? x.songs ?? 0) });
 const showOf = x => ({ ...ref(x), imageUrl: x.art || undefined, description: x.description || "", publisher: x.author || "", episodeCount: Number(x.episodes || x.episode_count || 0) });
 const stationOf = x => ({ ...ref(x), imageUrl: x.art || undefined, description: x.description || "" });
 const episodeOf = (x, show) => ({
-  id: `podcast-episode:${x.id}`, name: x.title || x.name || "", duration: Number(x.time || 0) * 1000,
+  id: `podcast-episode:${x.id}`, name: x.title || x.name || "", duration: Math.round(Number(x.time || 0) * 1000),
   artists: x.author ? [{ id: "", name: x.author }] : [],
   album: { id: show.id, name: show.name, imageUrl: x.art || show.imageUrl },
   showId: show.id, description: x.description || "", published: x.pubdate || undefined,
@@ -256,5 +256,5 @@ export async function stream({ id }) {
   const mime = String(item.stream_mime || item.mime || "").split(";")[0].toLowerCase();
   const mimeTypes = { "audio/mpeg": "mp3", "audio/flac": "flac", "audio/ogg": "ogg", "application/ogg": "ogg", "audio/wav": "wav", "audio/mp4": "m4a", "audio/aac": "aac" };
   const type = String(item.stream_format || item.format || mimeTypes[mime] || "").toLowerCase();
-  return { url:url.href, ...(type ? {type} : {}), bitRate:Number(item.stream_bitrate || item.bitrate || 0) };
+  return { url:url.href, ...(type ? {type} : {}), bitRate:Math.round(Number(item.stream_bitrate || item.bitrate || 0)) };
 }
