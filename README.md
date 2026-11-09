@@ -33,7 +33,7 @@ Tested with NextCloud Music v3.3.0 and [MyGo Music](https://github.com/egoist/my
 
 ## 中文说明
 
-本插件是为 [MyGo Music](https://github.com/egoist/mygo-music) 加上适用于类似 NextCloud Music 的 Ampache 兼容音乐服务器而制作的，目前支持音乐，歌单，博客和互联网电台。
+本插件是为 [MyGo Music](https://github.com/egoist/mygo-music) 加上适用于类似 NextCloud Music 的 Ampache 兼容音乐服务器而制作的，目前支持音乐，歌单，播客和互联网电台。
 
 要么通过 App 链接 [mygo-music://install-plugin?repo=benhaotang/my-go-music-plugin-Ampache](mygo-music://install-plugin?repo=benhaotang/my-go-music-plugin-Ampache) 安装，要么在设置中通过本项目 GitHub 地址安装 [https://github.com/benhaotang/my-go-music-plugin-Ampache](https://github.com/benhaotang/my-go-music-plugin-Ampache)
 
